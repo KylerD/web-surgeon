@@ -5,6 +5,13 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx}',
     './app/**/*.{js,ts,jsx,tsx}',
   ],
-  theme: {},
+  theme: {
+    extend: {}
+  },
   plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      "synthwave",
+    ],
+  },
 }
