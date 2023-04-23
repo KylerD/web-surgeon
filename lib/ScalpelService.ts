@@ -1,25 +1,27 @@
 import { DissectedWebPage } from "@/models/DissectedWebPage";
-import { encode, decode } from 'gpt-3-encoder'
 import * as cheerio from 'cheerio'
+import { TokenService } from "./TokenService";
 
-const EMBEDDING_MAX_TOKENS = 8191;
-const COMPLETION_MAX_TOKENS = 2048;
-const COMPLETION_RESPONSE_MAX_TOKENS = 300;
 
 export class ScalpelService {
+  constructor(
+    private embeddingTokenLimit: number,
+    private completionTokenLimit: number,
+    private tokenService: TokenService) { }
 
   private embeddableSections(content: string): string[] {
-    const tokenizedContent = encode(content);
+    const tokenizedContent = this.tokenService.encode(content);
 
-    if (tokenizedContent.length > EMBEDDING_MAX_TOKENS) {
-      const sectionCount = Math.ceil(tokenizedContent.length / EMBEDDING_MAX_TOKENS);
+    if (tokenizedContent.length > this.embeddingTokenLimit) {
+      const sectionCount = Math.ceil(tokenizedContent.length / this.embeddingTokenLimit);
 
       const sections = [];
 
       for (let i = 0; i < sectionCount; i++) {
         const start = i;
-        const end = i + EMBEDDING_MAX_TOKENS;
-        sections.push(decode(tokenizedContent.slice(start, end)));
+        const end = i + this.embeddingTokenLimit;
+        const section = this.tokenService.decode(tokenizedContent.slice(start, end));
+        sections.push(section);
       }
 
       return sections;
@@ -28,20 +30,20 @@ export class ScalpelService {
     return [content];
   }
 
-  private summariseableContent(content: string): string {
-    const tokenizedContent = encode(content);
-    const summarySpace = COMPLETION_MAX_TOKENS - COMPLETION_RESPONSE_MAX_TOKENS;
+  private summariseableContent(content: string, contextMargin: number): string {
+    const tokenizedContent = this.tokenService.encode(content);
+    const analysisMargin = this.completionTokenLimit - contextMargin;
 
-    if (tokenizedContent.length < summarySpace) {
+    if (tokenizedContent.length < analysisMargin) {
       return content;
     } else {
       const start = 0;
-      const end = summarySpace;
-      return decode(tokenizedContent.slice(start, end));
+      const end = analysisMargin;
+      return this.tokenService.decode(tokenizedContent.slice(start, end));
     }
   }
 
-  async dissect(url: string): Promise<DissectedWebPage> {
+  async dissect(url: string, contextMargin: number): Promise<DissectedWebPage> {
     const response = await fetch(url);
     const html = await response.text();
 
@@ -49,28 +51,30 @@ export class ScalpelService {
 
     $('script, style, noscript, header, footer, nav, iframe, img').remove();
 
-    const links: string[] = $('body a')
-      .filter((idx, ele) => {
-        const href = $(ele).attr('href');
-        if (!href) return false;
+    const internalLinks: string[] = [];
+    const externalLinks: string[] = [];
 
-        return href.startsWith('/')
+    $('body a')
+      .each((idx, ele) => {
+        const href = $(ele).attr('href') as string
+        if (href.startsWith('/')) {
+          internalLinks.push(href);
+        } else if (href.startsWith('https://')) {
+          externalLinks.push(href);
+        }
       })
-      .map((idx, ele) => $(ele).attr('href') as string).get();
 
     const content = $('body').text().replace(/\s+/g, ' ').trim();
+
+    const summariseableContent = this.summariseableContent(content, contextMargin);
     const embeddableSections = this.embeddableSections(content);
-    const summariseableContent = this.summariseableContent(content);
 
     return {
       content,
-      links,
-      embeddableSections,
-      summariseableContent
+      internalLinks,
+      externalLinks,
+      summariseableContent,
+      embeddableSections
     }
-  }
-
-  getSummaryAllowance(): number {
-    return COMPLETION_RESPONSE_MAX_TOKENS;
   }
 }
