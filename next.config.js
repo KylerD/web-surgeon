@@ -5,6 +5,8 @@ const nextConfig = {
     embeddingTokenLimit: '8191',
     completionTokenLimit: '2048',
     summarisationWordLimit: '300',
+    keywordsLimit: '5',
+    referencesLimit: '10'
   }
 }
 

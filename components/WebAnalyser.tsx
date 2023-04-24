@@ -86,7 +86,7 @@ export function WebAnalyser() {
                         <Spinner
                           width={6}
                           height={6}
-                          textColor={'text-secondary'}
+                          textColor={'text-white'}
                           fillColor={`fill-primary`}
                         />
                         :

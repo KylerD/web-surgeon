@@ -15,6 +15,7 @@ export default function Home() {
           <div className="hero my-auto">
             <div className="hero-content text-center">
               <div className="max-w-4xl">
+
                 <h1 className="text-8xl font-bold">
                   Operate online with {''}
                   <span className='text-primary'>Web {' '}</span>

@@ -1,5 +1,3 @@
-import { DissectedWebPage } from "@/models/DissectedWebPage";
-import * as cheerio from 'cheerio'
 import { TokenService } from "./TokenService";
 
 
@@ -30,7 +28,7 @@ export class ScalpelService {
     return [content];
   }
 
-  private summariseableContent(content: string, contextMargin: number): string {
+  private getContextFromContent(content: string, contextMargin: number): string {
     const tokenizedContent = this.tokenService.encode(content);
     const analysisMargin = this.completionTokenLimit - contextMargin;
 
@@ -43,38 +41,11 @@ export class ScalpelService {
     }
   }
 
-  async dissect(url: string, contextMargin: number): Promise<DissectedWebPage> {
-    const response = await fetch(url);
-    const html = await response.text();
+  getAllowableContextFromContent(content: string, contextMargin: number): string {
+    return this.getContextFromContent(content, contextMargin);
+  }
 
-    const $ = cheerio.load(html);
-
-    $('script, style, noscript, header, footer, nav, iframe, img').remove();
-
-    const internalLinks: string[] = [];
-    const externalLinks: string[] = [];
-
-    $('body a')
-      .each((idx, ele) => {
-        const href = $(ele).attr('href') as string
-        if (href.startsWith('/')) {
-          internalLinks.push(href);
-        } else if (href.startsWith('https://')) {
-          externalLinks.push(href);
-        }
-      })
-
-    const content = $('body').text().replace(/\s+/g, ' ').trim();
-
-    const summariseableContent = this.summariseableContent(content, contextMargin);
-    const embeddableSections = this.embeddableSections(content);
-
-    return {
-      content,
-      internalLinks,
-      externalLinks,
-      summariseableContent,
-      embeddableSections
-    }
+  getEmbeddableSections(content: string): string[] {
+    return this.embeddableSections(content);
   }
 }

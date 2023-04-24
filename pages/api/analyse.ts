@@ -1,16 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai'
+import { Configuration, OpenAIApi } from 'openai'
 import { HTTPMethod } from '@/models/http/httpMethod'
 import { HTTPCode } from '@/models/http/httpCodes'
 import { ScalpelService } from '@/lib/ScalpelService';
-import { DissectedWebPage } from '@/models/DissectedWebPage';
-import { AnalysisResponse } from '@/models/AnalysisResponse';
 import { TokenService } from '@/lib/TokenService';
+import { AnalysisService } from '@/lib/AnalysisService';
+import { AnalysedWebPage } from '@/models/AnalysedWebPage';
+import { SummarisationService } from '@/lib/SummarisationService';
+import { KeywordService } from '@/lib/KeywordService';
+import { ReferenceService } from '@/lib/ReferenceService';
+import { AnalysisResponse } from '@/models/AnalysisResponse';
 
-interface ChatCompletionAnalysisResponse {
-  summary: string;
-  keywords: string[];
-}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
@@ -27,37 +27,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
   const openai = new OpenAIApi(configuration);
+  const tokenService = new TokenService();
 
-  const summarisationWordLimit = parseInt(process.env.summarisationWordLimit as string);
+  const analysisService = new AnalysisService();
+  const webPageAnalysis: AnalysedWebPage = await analysisService.analyseUrl(url);
 
-  const systemContext = `You will behave as a content analysis API.
-  You will recieve the content of web pages and analyse them, returning your analysis in a JSON format. 
-  You will process the results into a JSON object with the following structure:
-  { "summary": "...", "keywords": ["...", "...", "..."] }
-  Where "summary" is an overview of the content provided in up to ${summarisationWordLimit} words and "keywords" is an array containing the 3 keywords that best describe the content of the page. 
-  Only return responses in this format.`
-
-  const promptContext = `### Content`
+  if (!webPageAnalysis.content) {
+    return res.status(HTTPCode.BadRequest).json({ message: 'No content found' });
+  }
 
   const embeddingTokenLimit = parseInt(process.env.embeddingTokenLimit as string);
   const completionTokenLimit = parseInt(process.env.completionTokenLimit as string);
 
-  const tokenService = new TokenService();
   const scalpel: ScalpelService = new ScalpelService(embeddingTokenLimit, completionTokenLimit, tokenService);
 
-  const unpredictableSafetyMargin = 50;
-  const contextMargin =
-    tokenService.tokenCount(systemContext + promptContext) +
-    summarisationWordLimit +
-    unpredictableSafetyMargin;
+  const summarisationWordLimit = parseInt(process.env.summarisationWordLimit as string);
+  const summarisationService = new SummarisationService(openai, summarisationWordLimit, tokenService);
 
-  const webPage: DissectedWebPage = await scalpel.dissect(url, contextMargin);
+  const keywordsLimit = parseInt(process.env.keywordsLimit as string);
+  const keywordService = new KeywordService(openai, keywordsLimit, tokenService);
 
-  if (!webPage.content) {
-    return res.status(HTTPCode.BadRequest).json({ message: 'No content found' });
-  }
+  const referencesLimit = parseInt(process.env.referencesLimit as string);
+  const referenceService = new ReferenceService(openai, referencesLimit, tokenService);
 
-  const moderationResponse = await openai.createModeration({ input: webPage.summariseableContent });
+  const availableSummaryContext = scalpel.getAllowableContextFromContent(webPageAnalysis.content, summarisationService.getContextMargin());
+  const availableKeywordsContext = scalpel.getAllowableContextFromContent(webPageAnalysis.content, keywordService.getContextMargin());
+  const avialbleReferenceContext = scalpel.getAllowableContextFromContent(webPageAnalysis.content, referenceService.getContextMargin());
+
+  const moderationResponse = await openai.createModeration({ input: availableSummaryContext });
   const [results] = moderationResponse.data.results;
 
   if (results.flagged) {
@@ -68,44 +65,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 
-  const systemMsg: ChatCompletionRequestMessage = {
-    role: 'system',
-    content: systemContext
+  const [summary, keywords] = await Promise.all([
+    summarisationService.getSummary(availableSummaryContext),
+    keywordService.getKeywords(availableKeywordsContext)
+  ]);
+
+  const analysis: AnalysisResponse = {
+    overview: summary,
+    keywords: keywords
   }
 
-  const userMsg: ChatCompletionRequestMessage = {
-    role: 'user',
-    content: promptContext + ' ' + webPage.summariseableContent
-  }
-
-  const completionResponse = await openai.createChatCompletion({
-    model: 'gpt-3.5-turbo',
-    messages: [systemMsg, userMsg]
-  });
-
-  const completionContent = completionResponse.data.choices[0].message?.content;
-
-  if (!completionContent) {
-    return res.status(500).json({ message: 'No analysis available' });
-  }
-
-  try {
-    const parsedCompletion: ChatCompletionAnalysisResponse = JSON.parse(completionContent);
-
-    const analysis: AnalysisResponse = {
-      overview: parsedCompletion.summary,
-      keywords: parsedCompletion.keywords,
-      internalLinks: webPage.internalLinks,
-      externalLinks: webPage.externalLinks
-    }
-
-    return res.status(200).json({ ...analysis });
-  } catch (err) {
-    console.error('Could not parse response');
-    console.info(completionContent);
-    return res.status(500).json({ message: 'Something went wrong' });
-  }
+  return res.status(200).json(analysis);
 
 }
-
 
