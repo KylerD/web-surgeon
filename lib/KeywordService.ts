@@ -10,7 +10,7 @@ export class KeywordService implements CompletionService {
     this.systemContext = `You are a pattern analysis tool.
     You will recieve the content of a web page and return the ${this.keywordLimit} most relevant keywords which describe the content of the web page.
     Only return ${this.keywordLimit} comma seperated keywords e.g. "football, sport, soccer" 
-    Do not return any other information`
+    Do not return any other information. If you are not sure what keywords to return, return "none"`
   }
 
   getContextMargin(): number {

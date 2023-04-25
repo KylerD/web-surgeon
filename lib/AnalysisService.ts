@@ -11,7 +11,7 @@ export class AnalysisService {
 
     const $ = cheerio.load(html);
 
-    $('script, style, noscript, header, footer, nav, iframe, img').remove();
+    $('script, style, noscript, footer, nav, iframe, img').remove();
 
     const links: string[] = [];
 
@@ -28,10 +28,12 @@ export class AnalysisService {
       })
 
     const content = $('body').text().replace(/\s+/g, ' ').trim();
+    const sentences = content.split('.').map(s => s.trim()).filter(s => s.length > 0);
 
     return {
       content,
       links,
+      sentences
     }
   }
 }
