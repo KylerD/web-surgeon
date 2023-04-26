@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <main
-      className='bg-cover bg-[url("/background-pattern.svg")]'>
+      className='w-full bg-cover bg-[url("/background-pattern.svg")]'>
 
       <div className="flex flex-col justify-between h-full min-h-screen bg-base-200 bg-opacity-80 ">
 
@@ -19,7 +19,7 @@ export default function Home() {
               <div className="max-w-4xl">
                 <Mask />
 
-                <h1 className="text-8xl font-bold">
+                <h1 className="text-4xl sm:text-8xl font-bold">
                   Operate online with {''}
                   <span className='text-primary'>Web {' '}</span>
                   <span className='text-secondary'>Surgeon</span>

@@ -71,7 +71,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (results.flagged) {
       console.error('URL was suitable for analysis: ' + url + ' - ' + results.categories);
-
       return res.status(HTTPCode.BadRequest).end();
     }
 
@@ -85,13 +84,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.info('Embedded sentences: ' + embeddedSentences.length);
 
     const page: InsertPageRequest = {
+      title: webPageAnalysis.title,
       url: url,
       overview: summary,
       keywords: keywords
     }
 
     const insertedPage: Page = await storageService.insertPage(page);
-
     await storageService.insertPageSentences(insertedPage.id, embeddedSentences);
 
     return res.status(HTTPCode.OK).json({ reference: insertedPage.reference });

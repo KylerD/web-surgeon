@@ -52,18 +52,18 @@ export function PageBreakdown({ page }: { page: Page }) {
         <div className="max-w-7xl">
           <Mask />
 
-          <h1 className="text-8xl font-bold text-primary mb-4">Overview</h1>
-          <div className="flex flex-row space-x-2 items-center w-full justify-center mb-4">
+          <h1 className="text-4xl sm:text-6xl font-bold text-primary mb-4">{page.title}</h1>
+          <div className="flex flex-col sm:flex-row items-center w-full justify-center mb-4">
             {page.keywords.map((keyword, index) => {
               const keywordColor = `badge-${keywordColors[index % keywordColors.length]}`;
-              return <div key={index} className={`badge ${keywordColor} badge-outline badge-lg`}>{keyword}</div>
+              return <div key={index} className={`badge ${keywordColor} badge-outline badge-lg my-1 sm:my-0 sm:mx-2`}>{keyword}</div>
             })}
           </div>
 
-          <p className="text-2xl mb-4">{page.overview}</p>
+          <p className="text-lg sm:text-2xl mb-4">{page.overview}</p>
 
-          <h2 className="text-6xl font-bold text-secondary mb-4">Insights</h2>
-          <p className="text-2xl mb-4">Ask Web Surgeon anything about the web-page</p>
+          <h2 className="text-2xl sm:text-6xl font-bold text-secondary mb-4">Insights</h2>
+          <p className="text-2xl mb-4">Ask Web Surgeon anything about the page</p>
 
           {error &&
             <div className="alert alert-error shadow-lg mb-4">
@@ -102,8 +102,8 @@ export function PageBreakdown({ page }: { page: Page }) {
           </form>
 
           {answer &&
-            <div className="alert alert-success shadow-lg m-4">
-              <p className="font-semibold text-xl">{answer}</p>
+            <div className="alert alert-success shadow-lg mt-4 sm:m-4 sm:max-w-3xl sm:mx-auto">
+              <p className="text-xl">{answer}</p>
             </div>
           }
         </div>

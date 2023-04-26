@@ -48,7 +48,7 @@ export function WebAnalyser() {
     <div className="hero my-auto">
       <div className="hero-content text-center">
         <div className="max-w-6xl">
-          <h1 className="text-8xl font-bold text-primary">Begin Analysis</h1>
+          <h1 className="text-4xl sm:text-8xl font-bold text-primary">Begin Analysis</h1>
           <p className="py-6 text-xl">
             Enter a URL and {' '}
             <span className="text-primary">Web {' '}</span>

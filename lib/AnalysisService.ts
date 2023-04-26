@@ -29,8 +29,10 @@ export class AnalysisService {
 
     const content = $('body').text().replace(/\s+/g, ' ').trim();
     const sentences = content.split('.').map(s => s.trim()).filter(s => s.length > 0);
+    const title = $('title').text().trim();
 
     return {
+      title,
       content,
       links,
       sentences

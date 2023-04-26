@@ -58,6 +58,7 @@ export class StorageService {
     const { error, data } = await this.client
       .from('page')
       .insert({
+        title: page.title,
         url: page.url,
         overview: page.overview,
         keywords: page.keywords

@@ -7,10 +7,9 @@ export class KeywordService implements CompletionService {
   unpredictableSafetyMargin: number = 50;
 
   constructor(private openAI: OpenAIApi, private keywordLimit: number, private tokenService: TokenService) {
-    this.systemContext = `You are a pattern analysis tool.
-    You will recieve the content of a web page and return the ${this.keywordLimit} most relevant keywords which describe the content of the web page.
-    Only return ${this.keywordLimit} comma seperated keywords e.g. "football, sport, soccer" 
-    Do not return any other information. If you are not sure what keywords to return, return "none"`
+    this.systemContext = `You are a topic analysis tool that returns the ${this.keywordLimit} most relevant topics of content. The content you will be given is extracted from a web page.
+    Only return ${this.keywordLimit} comma seperated topics e.g. "football, sport, soccer" 
+    Do not return any other information. If you are not sure what keywords to return, return nothing.`
   }
 
   getContextMargin(): number {
@@ -27,7 +26,7 @@ export class KeywordService implements CompletionService {
 
     const userMsg: ChatCompletionRequestMessage = {
       role: 'user',
-      content: content
+      content: `### Content: ${content}`
     }
 
     const completionResponse = await this.openAI.createChatCompletion({
