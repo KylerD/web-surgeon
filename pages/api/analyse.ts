@@ -8,37 +8,38 @@ import { AnalysisService } from '@/lib/AnalysisService';
 import { AnalysedWebPage } from '@/models/AnalysedWebPage';
 import { SummarisationService } from '@/lib/SummarisationService';
 import { KeywordService } from '@/lib/KeywordService';
-import { AnalysisResponse } from '@/models/AnalysisResponse';
+import { InsertPageRequest, Page } from '@/models/Page';
 import { EmbeddingService } from '@/lib/EmbeddingService';
-import { createClient } from '@supabase/supabase-js';
+import { StorageService } from '@/lib/StorageService';
 
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
 
   if (method !== HTTPMethod.POST) {
-    return res.status(HTTPCode.NotAllowed).json({ message: 'Method not allowed' });
+    console.error('Method not allowed');
+    return res.status(HTTPCode.NotAllowed).end();
   }
 
-  const { url } = req.body;
+  const url = req.body.url as string;
 
   if (!url) {
-    return res.status(HTTPCode.BadRequest).json({ message: 'Missing URL' });
+    console.error('Missing request body');
+    return res.status(HTTPCode.BadRequest).end();
   }
 
   const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
   const openai = new OpenAIApi(configuration);
+  const embeddingService = new EmbeddingService(openai);
   const tokenService = new TokenService();
+  const storageService = new StorageService();
 
   try {
-    const supabase = createClient(process.env.SUPABASE_URL as string, process.env.SUPABASE_KEY as string);
+    const existingPage: Page | null = await storageService.getPage(url);
 
-    const { data } = await supabase.from('page').select().eq('url', url).single();
-
-    if (data) {
+    if (existingPage) {
       console.info('Using cached analysis for ' + url);
-      const cachedAnalysis = data as AnalysisResponse;
-      return res.status(HTTPCode.OK).json(cachedAnalysis);
+      return res.status(HTTPCode.OK).json({ reference: existingPage.reference });
     }
 
     const analysisService = new AnalysisService();
@@ -46,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!webPageAnalysis.content) {
       console.error('No content found for ' + url);
-      return res.status(HTTPCode.BadRequest).json({ message: 'No content found' });
+      return res.status(HTTPCode.BadRequest).end();
     }
 
     const completionTokenLimit = parseInt(process.env.completionTokenLimit as string);
@@ -71,66 +72,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (results.flagged) {
       console.error('URL was suitable for analysis: ' + url + ' - ' + results.categories);
 
-      return res.status(HTTPCode.BadRequest).json({
-        message: 'Content is not suitable for analysis',
-        flagged: true,
-        categories: results.categories
-      });
+      return res.status(HTTPCode.BadRequest).end();
     }
-
-    const embeddingService = new EmbeddingService(openai);
 
     const [summary, keywords, embeddedSentences] = await Promise.all([
       summarisationService.getSummary(availableSummaryContext),
       keywordService.getKeywords(availableKeywordsContext),
-      embeddingService.generateEmbeddings(webPageAnalysis.sentences)
+      embeddingService.generateEmbeddedSentences(webPageAnalysis.sentences)
     ]);
 
     console.info('URL analysed: ' + url);
     console.info('Embedded sentences: ' + embeddedSentences.length);
 
-    const analysis: AnalysisResponse = {
+    const page: InsertPageRequest = {
+      url: url,
       overview: summary,
-      keywords: keywords,
-      embeddedSentences: embeddedSentences
+      keywords: keywords
     }
 
-    const { error: upsertPageError, data: page } = await supabase
-      .from('page')
-      .insert({
-        url: url,
-        overview: analysis.overview,
-        keywords: analysis.keywords
-      })
-      .select()
-      .limit(1)
-      .single();
+    const insertedPage: Page = await storageService.insertPage(page);
 
-    if (upsertPageError) {
-      throw upsertPageError;
-    }
+    await storageService.insertPageSentences(insertedPage.id, embeddedSentences);
 
-    for (const embeddedStence of analysis.embeddedSentences) {
-      const { error: upsertEmbeddedSentenceError } = await supabase
-        .from('page_sentence')
-        .insert({
-          page_id: page.id,
-          content: embeddedStence.sentence,
-          embedding: embeddedStence.embedding
-        })
-        .select()
-        .limit(1)
-        .single();
-
-      if (upsertEmbeddedSentenceError) {
-        throw upsertEmbeddedSentenceError;
-      }
-    }
-
-    return res.status(HTTPCode.OK).json(analysis);
+    return res.status(HTTPCode.OK).json({ reference: insertedPage.reference });
   } catch (error) {
     console.error(error);
-    return res.status(HTTPCode.SomethingWentWrong).json({ message: 'Something went wrong' });
+    return res.status(HTTPCode.SomethingWentWrong).end();
   }
 }
 

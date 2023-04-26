@@ -1,4 +1,5 @@
 import { Footer } from '@/components/Footer';
+import { Mask } from '@/components/Mask';
 import { WebAnalyser } from '@/components/WebAnalyser';
 import { useState } from 'react';
 
@@ -11,10 +12,12 @@ export default function Home() {
       className='bg-cover bg-[url("/background-pattern.svg")]'>
 
       <div className="flex flex-col justify-between h-full min-h-screen bg-base-200 bg-opacity-80 ">
+
         {!begin && (
           <div className="hero my-auto">
             <div className="hero-content text-center">
               <div className="max-w-4xl">
+                <Mask />
 
                 <h1 className="text-8xl font-bold">
                   Operate online with {''}
