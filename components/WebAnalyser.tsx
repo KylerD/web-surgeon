@@ -2,6 +2,7 @@ import { DocumentMagnifyingGlassIcon, XCircleIcon } from "@heroicons/react/24/ou
 import { FormEvent, useState } from "react";
 import { Spinner } from "./Spinner";
 import { useRouter } from "next/router";
+import { Mask } from "./Mask";
 
 
 export function WebAnalyser() {
@@ -33,12 +34,11 @@ export function WebAnalyser() {
       body: JSON.stringify({ url })
     });
 
-    setAnalysing(false);
-
     if (response.ok) {
       const { reference } = await response.json();
       return router.push(`/${reference}`);
     } else {
+      setAnalysing(false);
       setError(true);
     }
   }
@@ -48,6 +48,8 @@ export function WebAnalyser() {
     <div className="hero my-auto">
       <div className="hero-content text-center">
         <div className="max-w-6xl">
+          <Mask />
+
           <h1 className="text-4xl sm:text-8xl font-bold text-primary">Begin Analysis</h1>
           <p className="py-6 text-xl">
             Enter a URL and {' '}

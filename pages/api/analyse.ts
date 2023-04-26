@@ -11,9 +11,10 @@ import { KeywordService } from '@/lib/KeywordService';
 import { InsertPageRequest, Page } from '@/models/Page';
 import { EmbeddingService } from '@/lib/EmbeddingService';
 import { StorageService } from '@/lib/StorageService';
+import { withApiAuthRequired } from '@auth0/nextjs-auth0';
 
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default withApiAuthRequired(async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
 
   if (method !== HTTPMethod.POST) {
@@ -98,5 +99,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error(error);
     return res.status(HTTPCode.SomethingWentWrong).end();
   }
-}
+});
 

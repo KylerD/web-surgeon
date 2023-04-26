@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth0/nextjs-auth0": "^2.5.0",
     "@heroicons/react": "^2.0.17",
     "@supabase/supabase-js": "^2.21.0",
     "@tailwindcss/typography": "^0.5.9",

@@ -63,7 +63,7 @@ export function PageBreakdown({ page }: { page: Page }) {
           <p className="text-lg sm:text-2xl mb-4">{page.overview}</p>
 
           <h2 className="text-2xl sm:text-6xl font-bold text-secondary mb-4">Insights</h2>
-          <p className="text-2xl mb-4">Ask Web Surgeon anything about the page</p>
+          <p className="text-2xl mb-4">Ask Web Surgeon about the page</p>
 
           {error &&
             <div className="alert alert-error shadow-lg mb-4">

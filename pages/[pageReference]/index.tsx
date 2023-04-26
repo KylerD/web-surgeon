@@ -2,9 +2,10 @@ import { Footer } from '@/components/Footer';
 import { PageBreakdown } from '@/components/PageBreakdown';
 import { StorageService } from '@/lib/StorageService';
 import { Page } from '@/models/Page';
+import { withPageAuthRequired } from '@auth0/nextjs-auth0/client';
 
 
-export default function ExistingPage({ page }: { page: Page }) {
+export function ExistingPage({ page }: { page: Page }) {
 
   return (
     <main
@@ -17,6 +18,8 @@ export default function ExistingPage({ page }: { page: Page }) {
     </main>
   )
 }
+
+export default withPageAuthRequired(ExistingPage);
 
 export async function getServerSideProps(context: any) {
   const pageReference = context.query.pageReference as string;

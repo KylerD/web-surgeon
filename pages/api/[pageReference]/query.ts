@@ -2,20 +2,15 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { Configuration, OpenAIApi } from 'openai'
 import { HTTPMethod } from '@/models/http/httpMethod'
 import { HTTPCode } from '@/models/http/httpCodes'
-import { ScalpelService } from '@/lib/ScalpelService';
-import { TokenService } from '@/lib/TokenService';
-import { AnalysisService } from '@/lib/AnalysisService';
-import { AnalysedWebPage } from '@/models/AnalysedWebPage';
-import { SummarisationService } from '@/lib/SummarisationService';
-import { KeywordService } from '@/lib/KeywordService';
-import { InsertPageRequest, Page } from '@/models/Page';
+import { Page } from '@/models/Page';
 import { EmbeddingService } from '@/lib/EmbeddingService';
 import { StorageService } from '@/lib/StorageService';
 import { PageSentence } from '@/models/PageSentence';
 import { QueryPageService } from '@/lib/QueryPageService';
+import { withApiAuthRequired } from '@auth0/nextjs-auth0';
 
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default withApiAuthRequired(async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { method } = req;
   const pageReference = req.query.pageReference as string;
 
@@ -63,5 +58,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error(error);
     return res.status(HTTPCode.SomethingWentWrong).end();
   }
-}
+})
 
