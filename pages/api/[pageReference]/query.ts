@@ -46,6 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const embeddedQuery = await embeddingService.embedQuery(query);
     const matchingSentences: PageSentence[] = await storageService.getMatchingPageSentences(page.id, embeddedQuery);
+
     const context = page.overview.concat("Relevant sections: ", matchingSentences.map(s => s.content).join('. '));
 
     const queryPageService = new QueryPageService(

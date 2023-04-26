@@ -41,7 +41,7 @@ export class StorageService {
     const { error, data: pageSentences } = await this.client.rpc('match_page_sentences', {
       embedding: embeddedQuery,
       page_id: pageId,
-      match_threshold: 0.8,
+      match_threshold: 0.75,
       match_count: 100,
       min_content_length: 5
     });
