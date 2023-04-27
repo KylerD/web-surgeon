@@ -1,6 +1,7 @@
 import { Footer } from '@/components/Footer';
 import { Mask } from '@/components/Mask';
 import Link from 'next/link';
+import Script from 'next/script';
 
 
 export default function Home() {
@@ -30,9 +31,12 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <div id="wcb" className="carbonbadge"></div>
 
         <Footer />
       </div>
+
+      <Script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer={true} />
     </main>
   )
 }
