@@ -76,19 +76,20 @@ export class StorageService {
   }
 
   async insertPageSentences(pageId: string, pageSentences: PageSentence[]): Promise<void> {
-    for (const pageSentence of pageSentences) {
-      const { error: upsertEmbeddedSentenceError } = await this.client
-        .from('page_sentence')
-        .insert({
-          page_id: pageId,
+    const insertPageSentences = pageSentences.map(pageSentence => {
+      return {
+        page_id: pageId,
           content: pageSentence.content,
           embedding: pageSentence.embedding
-        });
+        }
+      });
 
-      if (upsertEmbeddedSentenceError) {
-        throw upsertEmbeddedSentenceError;
-      }
+    const { error: upsertEmbeddedSentenceError } = await this.client
+      .from('page_sentence')
+      .insert(insertPageSentences);
+
+    if (upsertEmbeddedSentenceError) {
+      throw upsertEmbeddedSentenceError;
     }
-
   }
 }
