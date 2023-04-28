@@ -9,8 +9,10 @@ export default function Home() {
   return (
     <main
       className='w-full bg-cover bg-[url("/background-pattern.svg")]'>
-      <div className="flex flex-col justify-between min-h-screen bg-base-200 bg-opacity-80 ">
-        <div className="hero my-auto">
+      <div className="flex flex-col justify-between h-screen bg-base-200 bg-opacity-80">
+        <div id="wcb" className="carbonbadge wcb-d mt-2"></div>
+        <div className="hero sm:my-auto">
+
           <div className="hero-content text-center">
             <div className="max-w-4xl">
               <Mask />
@@ -31,8 +33,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-        <div id="wcb" className="carbonbadge"></div>
-
         <Footer />
       </div>
 

@@ -43,9 +43,8 @@ export function WebAnalyser() {
     }
   }
 
-
   return (
-    <div className="hero my-auto">
+    <div className="hero sm:my-auto">
       <div className="hero-content text-center">
         <div className="max-w-6xl">
           <Mask />

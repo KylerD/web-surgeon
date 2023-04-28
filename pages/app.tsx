@@ -7,7 +7,7 @@ export function App() {
   return (
     <main
       className='w-full bg-cover bg-[url("/background-pattern.svg")]'>
-      <div className="flex flex-col justify-between h-full min-h-screen bg-base-200 bg-opacity-80 ">
+      <div className="flex flex-col justify-between h-full h-screen bg-base-200 bg-opacity-80 ">
         <WebAnalyser />
         <Footer />
       </div>
